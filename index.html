@@ -9,6 +9,17 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <h1>圖形推理練習</h1>
+
+  <!-- API Key 輸入與儲存區塊 -->
+  <div id="api-key-container" style="margin: 15px 0; padding: 10px; background: #f0f4f8; border-radius: 8px;">
+    <label for="api-key-input" style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">Gemini API Key：</label>
+    <div style="display: flex; gap: 8px;">
+      <input type="password" id="api-key-input" placeholder="請在此貼上您的 API Key" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      <button id="save-key-btn" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">儲存 Key</button>
+    </div>
+    <small id="key-status" style="color: #666; margin-top: 4px; display: block;"></small>
+  </div>
 
   <div class="card">
     <h3 id="question-title">題目載入中...</h3>
@@ -19,7 +30,7 @@
       <button id="mode-toggle-btn" class="mode-btn" onclick="toggleMode()">✏️ 劃掉模式：關閉</button>
     </div>
 
-    <!-- 選項按鈕 (傳入 this 以利劃掉樣式套用) -->
+    <!-- 選項按鈕 -->
     <div class="options" id="options-container">
       <button onclick="handleOptionClick('A', this)">A</button>
       <button onclick="handleOptionClick('B', this)">B</button>
@@ -28,7 +39,7 @@
       <button onclick="handleOptionClick('E', this)">E</button>
     </div>
 
-    <!-- 💡 貼在這裡：解題筆記區 -->
+    <!-- 解題筆記區 -->
     <div style="margin: 15px 0;">
       <label for="user-notes" style="display: block; font-weight: bold; margin-bottom: 5px;">📝 解題思路 / 筆記：</label>
       <textarea id="user-notes" rows="3" style="width: 100%; box-sizing: border-box; padding: 8px; border-radius: 6px; border: 1px solid #ccc; resize: vertical;" placeholder="可以在這裡寫下你的推論過程..."></textarea>
@@ -49,8 +60,31 @@
   </div>
 
   <script>
-  const API_KEY = "AQ.Ab8RN6JS0hipIutGmsECcmazs1Yn8i831stCWA6z7d9bwWEE6w"; 
+  // 1. API Key 管理與本地儲存 logic
+  const apiKeyInput = document.getElementById('api-key-input');
+  const saveKeyBtn = document.getElementById('save-key-btn');
+  const keyStatus = document.getElementById('key-status');
 
+  if (apiKeyInput && saveKeyBtn) {
+    const savedKey = localStorage.getItem('GEMINI_API_KEY');
+    if (savedKey) {
+      apiKeyInput.value = savedKey;
+      if (keyStatus) keyStatus.textContent = '已載入儲存的 API Key';
+    }
+
+    saveKeyBtn.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        localStorage.setItem('GEMINI_API_KEY', key);
+        if (keyStatus) keyStatus.textContent = 'API Key 已成功儲存！';
+      } else {
+        localStorage.removeItem('GEMINI_API_KEY');
+        if (keyStatus) keyStatus.textContent = '已清除 API Key';
+      }
+    });
+  }
+
+  // 2. 完整 107 題庫資料
   const questionBank = [
     { id: 1, image: "images/1.png", answer: "B" },
     { id: 2, image: "images/2.png", answer: "C" },
@@ -164,7 +198,6 @@
   let currentQuestion = null;
   let isEliminateMode = false;
 
-  // 切換劃掉模式
   function toggleMode() {
     isEliminateMode = !isEliminateMode;
     const toggleBtn = document.getElementById('mode-toggle-btn');
@@ -177,7 +210,6 @@
     }
   }
 
-  // 處理選項點擊（區分劃掉或作答）
   function handleOptionClick(selected, btnElement) {
     if (isEliminateMode) {
       btnElement.classList.toggle('eliminated');
@@ -191,10 +223,9 @@
     document.getElementById('explanation-box').style.display = 'none';
     document.getElementById('ai-btn').style.display = 'none';
     
-    // 新增這行：切換下一題時自動清空筆記
-    document.getElementById('user-notes').value = '';
+    const notesElement = document.getElementById('user-notes');
+    if (notesElement) notesElement.value = '';
     
-    // 清除所有選項的劃掉狀態
     const optionBtns = document.querySelectorAll('#options-container button');
     optionBtns.forEach(btn => btn.classList.remove('eliminated'));
 
@@ -223,7 +254,15 @@
     aiBtn.style.display = 'block';
   }
 
+  // 3. AI 解析與 API 請求邏輯
   async function askAI() {
+    const apiKey = localStorage.getItem('GEMINI_API_KEY') || (apiKeyInput ? apiKeyInput.value.trim() : '');
+
+    if (!apiKey) {
+      alert('請先在頁面上方輸入並儲存 Gemini API Key！');
+      return;
+    }
+
     const loadingText = document.getElementById('loading-text');
     const expBox = document.getElementById('explanation-box');
     const aiResult = document.getElementById('ai-result');
@@ -253,7 +292,7 @@
 3. 避免重複性的過程敘述（例如前一步已說過剩餘選項，後續步驟就不要重複贅述）。
 4. 表示對角線方向時，請直接使用純文字與符號（如：左上至右下 \\ 或 左下至右上 /）。`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${API_KEY}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -301,11 +340,9 @@
     }
   }
 
-  // 初始化載入第一題
   window.onload = function() {
     nextQuestion();
   };
   </script>
-  
 </body>
 </html>
