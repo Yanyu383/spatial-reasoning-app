@@ -9,7 +9,17 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<h1>圖形推理練習</h1>
 
+        <!-- 建議貼在這裡（標題下方） -->
+        <div id="api-key-container" style="margin: 15px 0; padding: 10px; background: #f0f4f8; border-radius: 8px;">
+            <label for="api-key-input" style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">Gemini API Key：</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="password" id="api-key-input" placeholder="請在此貼上您的 API Key" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button id="save-key-btn" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">儲存 Key</button>
+            </div>
+            <small id="key-status" style="color: #666; margin-top: 4px; display: block;"></small>
+        </div>
   <div class="card">
     <h3 id="question-title">題目載入中...</h3>
     <img id="question-img" src="" alt="題目圖片">
