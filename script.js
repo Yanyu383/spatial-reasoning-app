@@ -1,4 +1,35 @@
-const API_KEY = "AQ.Ab8RN6Lfpl5WltdZTv48wntq_aX0v_02olmlQs0rrIvdPxS-mg"; 
+// === API Key 管理邏輯（放在檔案最上方） ===
+const apiKeyInput = document.getElementById('api-key-input');
+const saveKeyBtn = document.getElementById('save-key-btn');
+const keyStatus = document.getElementById('key-status');
+
+// 頁面載入時檢查是否有儲存過的 Key
+if (apiKeyInput && saveKeyBtn) {
+  const savedKey = localStorage.getItem('GEMINI_API_KEY');
+  if (savedKey) {
+    apiKeyInput.value = savedKey;
+    if (keyStatus) keyStatus.textContent = '已載入儲存的 API Key';
+  }
+
+  // 綁定儲存按鈕點擊事件
+  saveKeyBtn.addEventListener('click', () => {
+    const key = apiKeyInput.value.trim();
+    if (key) {
+      localStorage.setItem('GEMINI_API_KEY', key);
+      if (keyStatus) keyStatus.textContent = 'API Key 已成功儲存！';
+    } else {
+      localStorage.removeItem('GEMINI_API_KEY');
+      if (keyStatus) keyStatus.textContent = '已清除 API Key';
+    }
+  });
+}
+
+
+
+
+
+
+
 
 const questionBank = [
   { id: 1, image: "images/1.png", answer: "B" },
