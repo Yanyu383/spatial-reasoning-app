@@ -93,7 +93,6 @@ function checkAnswer(selected) {
 // 3. AI 解析呼叫邏輯
 // ==========================================
 async function askAI() {
-  // 動態抓取儲存的 API Key
   const apiKey = localStorage.getItem('GEMINI_API_KEY') || (typeof apiKeyInput !== 'undefined' && apiKeyInput ? apiKeyInput.value.trim() : '');
 
   if (!apiKey) {
@@ -108,21 +107,65 @@ async function askAI() {
   if (loadingText) loadingText.style.display = 'block';
 
   try {
-    let base64Data = "";
-    
-    // 改用 Canvas 繪製畫面上已載入的圖片，避免 fetch 觸發 CORS/路徑報錯
     const imgElement = document.getElementById('question-img');
-    if (!imgElement || !imgElement.complete) {
-      throw new Error("圖片讀取失敗，請確認圖片路徑是否正確。");
+    if (!imgElement || !imgElement.src) {
+      throw new Error("找不到題目圖片來源。");
     }
 
-    const canvas = document.createElement('canvas');
-    canvas.width = imgElement.naturalWidth || imgElement.width;
-    canvas.height = imgElement.naturalHeight || imgElement.height;
-    
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(imgElement, 0, 0);
-    base64Data = canvas.toDataURL('image/png').split(',')[1];
+    // 利用 Promise 確保圖片完全載入後才轉 Base64
+    const base64Data = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png').split(',')[1]);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = () => reject(new Error("圖片載入失敗，請確認路徑。"));
+      img.src = imgElement.src; // 帶入當前顯示的圖片網址
+    });
+
+    // 發送請求至 Gemini 3.6 Flash
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: "請詳細解析這道圖形推理題目的邏輯與答案：" },
+            {
+              inline_data: {
+                mime_type: "image/png",
+                data: base64Data
+              }
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const text = data.candidates[0].content.parts[0].text;
+      if (aiResult) aiResult.innerText = text;
+      if (expBox) expBox.style.display = 'block';
+    } else {
+      alert('呼叫失敗！原因：' + (data.error ? data.error.message : JSON.stringify(data)));
+    }
+  } catch (err) {
+    alert('呼叫失敗！原因：' + err.message);
+  } finally {
+    if (loadingText) loadingText.style.display = 'none';
+  }
+}
 
     // 發送請求至 Gemini 3.6 Flash
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
