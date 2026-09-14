@@ -1,9 +1,10 @@
-// === API Key 管理邏輯（放在檔案最上方） ===
+// ==========================================
+// 1. 貼在檔案最上方：API Key 管理邏輯
+// ==========================================
 const apiKeyInput = document.getElementById('api-key-input');
 const saveKeyBtn = document.getElementById('save-key-btn');
 const keyStatus = document.getElementById('key-status');
 
-// 頁面載入時檢查是否有儲存過的 Key
 if (apiKeyInput && saveKeyBtn) {
   const savedKey = localStorage.getItem('GEMINI_API_KEY');
   if (savedKey) {
@@ -11,7 +12,6 @@ if (apiKeyInput && saveKeyBtn) {
     if (keyStatus) keyStatus.textContent = '已載入儲存的 API Key';
   }
 
-  // 綁定儲存按鈕點擊事件
   saveKeyBtn.addEventListener('click', () => {
     const key = apiKeyInput.value.trim();
     if (key) {
@@ -24,16 +24,24 @@ if (apiKeyInput && saveKeyBtn) {
   });
 }
 
-// 取得 Key（先抓 LocalStorage，沒有就抓輸入框）
-const apiKey = localStorage.getItem('GEMINI_API_KEY') || (apiKeyInput ? apiKeyInput.value.trim() : '');
 
-if (!apiKey) {
-  alert('請先輸入並儲存 Gemini API Key！');
-  return;
+// ==========================================
+// 2. 修改原本呼叫 API 的函式內部
+// ==========================================
+async function fetchGeminiExplanation(promptData) {
+  
+  // 【將原本寫死 API Key 的位置改為下面這幾行】
+  const apiKey = localStorage.getItem('GEMINI_API_KEY') || (apiKeyInput ? apiKeyInput.value.trim() : '');
+  
+  if (!apiKey) {
+    alert('請先輸入並儲存 Gemini API Key！');
+    return;
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+  // ...底下保持你原本 fetch 呼叫與處理邏輯...
 }
-
-// 組合 API URL
-const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
 
 
