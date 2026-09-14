@@ -24,7 +24,16 @@ if (apiKeyInput && saveKeyBtn) {
   });
 }
 
+// 取得 Key（先抓 LocalStorage，沒有就抓輸入框）
+const apiKey = localStorage.getItem('GEMINI_API_KEY') || (apiKeyInput ? apiKeyInput.value.trim() : '');
 
+if (!apiKey) {
+  alert('請先輸入並儲存 Gemini API Key！');
+  return;
+}
+
+// 組合 API URL
+const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
 
 
