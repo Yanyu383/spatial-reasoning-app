@@ -109,28 +109,57 @@ async function askAI() {
   try {
     const imgElement = document.getElementById('question-img');
     if (!imgElement || !imgElement.src) {
-      throw new Error("找不到題目圖片來源。");
+      throw new Error("【檢查關卡 1 失敗】畫面上的 <img> 標籤沒有讀取到有效的圖片網址 (src)。");
     }
 
-    // 利用 Promise 確保圖片完全載入後才轉 Base64
-    const base64Data = await new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth || img.width;
-          canvas.height = img.naturalHeight || img.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png').split(',')[1]);
-        } catch (e) {
-          reject(e);
-        }
-      };
-      img.onerror = () => reject(new Error("圖片載入失敗，請確認路徑。"));
-      img.src = imgElement.src; // 帶入當前顯示的圖片網址
+    // 嘗試將圖片繪製至 Canvas 轉 Base64
+    let base64Data = "";
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = imgElement.naturalWidth || imgElement.width;
+      canvas.height = imgElement.naturalHeight || imgElement.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgElement, 0, 0);
+      base64Data = canvas.toDataURL('image/png').split(',')[1];
+    } catch (canvasErr) {
+      throw new Error("【檢查關卡 2 失敗】Canvas 轉檔被瀏覽器安全性（CORS）攔截。詳細原因：" + canvasErr.message);
+    }
+
+    // 真正發送 API 請求
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: "請詳細解析這道圖形推理題目的邏輯與答案：" },
+            {
+              inline_data: {
+                mime_type: "image/png",
+                data: base64Data
+              }
+            }
+          ]
+        }]
+      })
     });
+
+    const data = await response.json();
+
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const text = data.candidates[0].content.parts[0].text;
+      if (aiResult) aiResult.innerText = text;
+      if (expBox) expBox.style.display = 'block';
+    } else {
+      // 這裡才是 API 驗證或模型層級回傳的錯誤
+      alert('【檢查關卡 3：API 拒絕回應】原因：' + (data.error ? data.error.message : JSON.stringify(data)));
+    }
+  } catch (err) {
+    alert('執行失敗：' + err.message);
+  } finally {
+    if (loadingText) loadingText.style.display = 'none';
+  }
+}
 
     // 發送請求至 Gemini 3.6 Flash
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
