@@ -1,13 +1,1 @@
-[
-  {
-    "id": 1,
-    "image": "https://i.imgur.com/example.png", 
-    "options": ["A", "B", "C", "D", "E"],
-    "answer": "B",
-    "explanation": {
-      "elements_observed": "每個大正方形被一條對角線分為兩個三角形，內部包含三個小圖形...",
-      "logic_pattern": "1. 對角線方向交替。 2. 圖形分佈呈上2下1與上1下2交替。 3. 實心圖形依圓形、正方形、菱形順序循環。",
-      "explanation_summary": "綜合對角線方向、小圖形數量分佈(上2下1)以及實心圖形變換順序，選項 B 為唯一正確答案。"
-    }
-  }
-]
+
