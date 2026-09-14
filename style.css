@@ -1,0 +1,103 @@
+body {
+  font-family: sans-serif;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 0 15px;
+  background: #f4f6f9;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+img {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.options {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+button {
+  flex: 1;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover {
+  background: #e0e8ff;
+  border-color: #0056b3;
+}
+
+.ai-btn {
+  width: 100%;
+  background: #28a745;
+  color: white;
+  border: none;
+  margin-top: 10px;
+  display: none;
+}
+
+.next-btn {
+  width: 100%;
+  background: #007bff;
+  color: white;
+  border: none;
+  margin-top: 10px;
+}
+
+.result {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.explanation {
+  display: none;
+  margin-top: 15px;
+  padding: 15px;
+  background: #eef9ff;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  white-space: pre-line;
+}
+
+.loading {
+  display: none;
+  margin-top: 10px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* --- 新增：劃掉模式相關樣式 --- */
+.mode-btn {
+  background: #6c757d;
+  color: white;
+  padding: 6px 12px;
+  font-size: 14px;
+  border: none;
+  flex: none;
+}
+
+.mode-active {
+  background-color: #dc3545 !important;
+}
+
+button.eliminated {
+  text-decoration: line-through;
+  opacity: 0.35;
+  background-color: #e9ecef !important;
+  border-color: #adb5bd !important;
+}
