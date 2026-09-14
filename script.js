@@ -1,5 +1,5 @@
 // ==========================================
-// 1. 貼在檔案最上方：API Key 管理邏輯
+// 1. API Key 管理邏輯
 // ==========================================
 const apiKeyInput = document.getElementById('api-key-input');
 const saveKeyBtn = document.getElementById('save-key-btn');
@@ -24,39 +24,17 @@ if (apiKeyInput && saveKeyBtn) {
   });
 }
 
-
 // ==========================================
-// 2. 修改原本呼叫 API 的函式內部
+// 2. 題目與互動邏輯
 // ==========================================
-async function fetchGeminiExplanation(promptData) {
-  
-  // 【將原本寫死 API Key 的位置改為下面這幾行】
-  const apiKey = localStorage.getItem('GEMINI_API_KEY') || (apiKeyInput ? apiKeyInput.value.trim() : '');
-  
-  if (!apiKey) {
-    alert('請先輸入並儲存 Gemini API Key！');
-    return;
-  }
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-  // ...底下保持你原本 fetch 呼叫與處理邏輯...
-}
-
-
-
-
-
-
 const questionBank = [
   { id: 1, image: "images/1.png", answer: "B" },
   { id: 2, image: "images/2.png", answer: "C" }
 ];
 
 let currentQuestion = null;
-let isEliminateMode = false; // 紀錄劃掉模式狀態
+let isEliminateMode = false;
 
-// 切換劃掉模式
 function toggleMode() {
   isEliminateMode = !isEliminateMode;
   const toggleBtn = document.getElementById('mode-toggle-btn');
@@ -70,7 +48,6 @@ function toggleMode() {
   }
 }
 
-// 統一點擊處理
 function handleOptionClick(selected, btnElement) {
   if (isEliminateMode) {
     btnElement.classList.toggle('eliminated');
@@ -84,7 +61,6 @@ function nextQuestion() {
   document.getElementById('explanation-box').style.display = 'none';
   document.getElementById('ai-btn').style.display = 'none';
   
-  // 重置劃線狀態
   const optionBtns = document.querySelectorAll('#options-container button');
   optionBtns.forEach(btn => btn.classList.remove('eliminated'));
 
@@ -113,7 +89,18 @@ function checkAnswer(selected) {
   aiBtn.style.display = 'block';
 }
 
+// ==========================================
+// 3. AI 解析呼叫邏輯
+// ==========================================
 async function askAI() {
+  // 動態抓取儲存的 API Key
+  const apiKey = localStorage.getItem('GEMINI_API_KEY') || (apiKeyInput ? apiKeyInput.value.trim() : '');
+
+  if (!apiKey) {
+    alert('請先在頁面上方輸入並儲存 Gemini API Key！');
+    return;
+  }
+
   const loadingText = document.getElementById('loading-text');
   const expBox = document.getElementById('explanation-box');
   const aiResult = document.getElementById('ai-result');
@@ -143,7 +130,8 @@ async function askAI() {
 3. 避免重複性的過程敘述（例如前一步已說過剩餘選項，後續步驟就不要重複贅述）。
 4. 表示對角線方向時，請直接使用純文字與符號（如：左上至右下 \\ 或 左下至右上 /）。`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${API_KEY}`, {
+    // 使用動態 apiKey 與正確認證模型 gemini-1.5-flash
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -191,5 +179,4 @@ async function askAI() {
   }
 }
 
-// 頁面初次載入
 nextQuestion();
