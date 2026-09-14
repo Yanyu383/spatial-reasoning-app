@@ -94,7 +94,7 @@ function checkAnswer(selected) {
 // ==========================================
 async function askAI() {
   // 動態抓取儲存的 API Key
-  const apiKey = localStorage.getItem('GEMINI_API_KEY') || (apiKeyInput ? apiKeyInput.value.trim() : '');
+  const apiKey = localStorage.getItem('GEMINI_API_KEY') || (typeof apiKeyInput !== 'undefined' && apiKeyInput ? apiKeyInput.value.trim() : '');
 
   if (!apiKey) {
     alert('請先在頁面上方輸入並儲存 Gemini API Key！');
@@ -105,22 +105,61 @@ async function askAI() {
   const expBox = document.getElementById('explanation-box');
   const aiResult = document.getElementById('ai-result');
 
-  loadingText.style.display = 'block';
+  if (loadingText) loadingText.style.display = 'block';
 
   try {
     let base64Data = "";
-    try {
-      const responseImg = await fetch(currentQuestion.image);
-      const blob = await responseImg.blob();
-      base64Data = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (imgErr) {
+    
+    // 改用 Canvas 繪製畫面上已載入的圖片，避免 fetch 觸發 CORS/路徑報錯
+    const imgElement = document.getElementById('question-img');
+    if (!imgElement || !imgElement.complete) {
       throw new Error("圖片讀取失敗，請確認圖片路徑是否正確。");
     }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = imgElement.naturalWidth || imgElement.width;
+    canvas.height = imgElement.naturalHeight || imgElement.height;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgElement, 0, 0);
+    base64Data = canvas.toDataURL('image/png').split(',')[1];
+
+    // 發送請求至 Gemini 3.6 Flash
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: "請詳細解析這道圖形推理題目的邏輯與答案：" },
+            {
+              inline_data: {
+                mime_type: "image/png",
+                data: base64Data
+              }
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const text = data.candidates[0].content.parts[0].text;
+      if (aiResult) aiResult.innerText = text;
+      if (expBox) expBox.style.display = 'block';
+    } else {
+      alert('呼叫失敗！原因：' + (data.error ? data.error.message : JSON.stringify(data)));
+    }
+  } catch (err) {
+    alert('呼叫失敗！原因：' + err.message);
+  } finally {
+    if (loadingText) loadingText.style.display = 'none';
+  }
+}
 
     const promptText = `請直接分析這張圖形邏輯推理題目，說明為何正確答案是 ${currentQuestion.answer}，並條列出規律。
 
