@@ -109,10 +109,10 @@ async function askAI() {
   try {
     const imgElement = document.getElementById('question-img');
     if (!imgElement || !imgElement.src) {
-      throw new Error("【檢查關卡 1 失敗】畫面上的 <img> 標籤沒有讀取到有效的圖片網址 (src)。");
+      throw new Error("【檢查關卡 1 失敗】畫面上找不到有效的圖片來源。");
     }
 
-    // 嘗試將圖片繪製至 Canvas 轉 Base64
+    // 將圖片轉為 Base64
     let base64Data = "";
     try {
       const canvas = document.createElement('canvas');
@@ -122,126 +122,18 @@ async function askAI() {
       ctx.drawImage(imgElement, 0, 0);
       base64Data = canvas.toDataURL('image/png').split(',')[1];
     } catch (canvasErr) {
-      throw new Error("【檢查關卡 2 失敗】Canvas 轉檔被瀏覽器安全性（CORS）攔截。詳細原因：" + canvasErr.message);
+      throw new Error("【檢查關卡 2 失敗】Canvas 轉檔被安全機制攔截：" + canvasErr.message);
     }
 
-    // 真正發送 API 請求
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: "請詳細解析這道圖形推理題目的邏輯與答案：" },
-            {
-              inline_data: {
-                mime_type: "image/png",
-                data: base64Data
-              }
-            }
-          ]
-        }]
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
-      const text = data.candidates[0].content.parts[0].text;
-      if (aiResult) aiResult.innerText = text;
-      if (expBox) expBox.style.display = 'block';
-    } else {
-      // 這裡才是 API 驗證或模型層級回傳的錯誤
-      alert('【檢查關卡 3：API 拒絕回應】原因：' + (data.error ? data.error.message : JSON.stringify(data)));
-    }
-  } catch (err) {
-    alert('執行失敗：' + err.message);
-  } finally {
-    if (loadingText) loadingText.style.display = 'none';
-  }
-}
-
-    // 發送請求至 Gemini 3.6 Flash
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: "請詳細解析這道圖形推理題目的邏輯與答案：" },
-            {
-              inline_data: {
-                mime_type: "image/png",
-                data: base64Data
-              }
-            }
-          ]
-        }]
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
-      const text = data.candidates[0].content.parts[0].text;
-      if (aiResult) aiResult.innerText = text;
-      if (expBox) expBox.style.display = 'block';
-    } else {
-      alert('呼叫失敗！原因：' + (data.error ? data.error.message : JSON.stringify(data)));
-    }
-  } catch (err) {
-    alert('呼叫失敗！原因：' + err.message);
-  } finally {
-    if (loadingText) loadingText.style.display = 'none';
-  }
-}
-
-    // 發送請求至 Gemini 3.6 Flash
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: "請詳細解析這道圖形推理題目的邏輯與答案：" },
-            {
-              inline_data: {
-                mime_type: "image/png",
-                data: base64Data
-              }
-            }
-          ]
-        }]
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
-      const text = data.candidates[0].content.parts[0].text;
-      if (aiResult) aiResult.innerText = text;
-      if (expBox) expBox.style.display = 'block';
-    } else {
-      alert('呼叫失敗！原因：' + (data.error ? data.error.message : JSON.stringify(data)));
-    }
-  } catch (err) {
-    alert('呼叫失敗！原因：' + err.message);
-  } finally {
-    if (loadingText) loadingText.style.display = 'none';
-  }
-}
-
-    const promptText = `請直接分析這張圖形邏輯推理題目，說明為何正確答案是 ${currentQuestion.answer}，並條列出規律。
+    const promptText = `請直接分析這張圖形邏輯推理題目，說明為何正確答案是 ${currentQuestion ? currentQuestion.answer : ''}，並條列出規律。
 
 要求：
-1. 嚴禁自我介紹（例如：我是圖形邏輯推理專家）與廢話開場白（例如：這是一道非常經典的題目...）。
+1. 嚴禁自我介紹與廢話開場白。
 2. 請直接從「規律分析」開始說明。
-3. 避免重複性的過程敘述（例如前一步已說過剩餘選項，後續步驟就不要重複贅述）。
+3. 避免重複性的過程敘述。
 4. 表示對角線方向時，請直接使用純文字與符號（如：左上至右下 \\ 或 左下至右上 /）。`;
 
-    // 使用動態 apiKey 與正確認證模型 gemini-1.5-flash
+    // 發送請求至 Gemini 3.6 Flash
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -259,7 +151,13 @@ async function askAI() {
     });
 
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) {
+      throw new Error("【檢查關卡 3：API 回傳錯誤】" + data.error.message);
+    }
+
+    if (!data.candidates || !data.candidates[0].content.parts[0].text) {
+      throw new Error("【檢查關卡 3：API 未回傳有效文字】");
+    }
 
     let originalText = data.candidates[0].content.parts[0].text;
 
@@ -280,13 +178,13 @@ async function askAI() {
       .replace(/\$\$/g, '')
       .replace(/\$/g, '');
 
-    aiResult.innerText = cleanText;
-    expBox.style.display = 'block';
+    if (aiResult) aiResult.innerText = cleanText;
+    if (expBox) expBox.style.display = 'block';
   } catch (err) {
-    alert("呼叫失敗！原因：" + err.message);
+    alert("執行失敗！原因：" + err.message);
     console.error(err);
   } finally {
-    loadingText.style.display = 'none';
+    if (loadingText) loadingText.style.display = 'none';
   }
 }
 
