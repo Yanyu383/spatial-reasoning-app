@@ -267,6 +267,13 @@ async function askAI() {
     }
 
     if (aiResult) {
+      const safeText = text
+        .replace(/~/g, '至')
+        .replace(/\$?\\rightarrow\$?/g, '→')
+        .replace(/\$?\\leftarrow\$?/g, '←')
+        .replace(/\$?\\uparrow\$?/g, '↑')
+        .replace(/\$?\\downarrow\$?/g, '↓');
+      
       aiResult.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
     }
     if (expBox) expBox.style.display = 'block';
