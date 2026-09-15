@@ -236,8 +236,9 @@ async function askAI() {
 要求：
 1. 嚴禁自我介紹與廢話開場白。
 2. 請直接從「規律分析」開始說明。
-3. 避免重複性的過程敘述。
-4. 表示對角線方向時，請直接使用純文字與符號（如：左上至右下 \\ 或 左下至右上 /）。`;
+3. 避免重複性的過程敘述，內容請緊湊條列。
+4. 時間或範圍表示請統一使用至（例如：10:30至12:00），請勿使用波浪號 ~。
+5. 表示對角線方向時，請直接使用純文字與符號（如：左上至右下 \\ 或 左下至右上 /）。`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
