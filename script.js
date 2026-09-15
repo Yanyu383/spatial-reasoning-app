@@ -212,12 +212,17 @@ async function askAI() {
   if (loadingText) loadingText.style.display = 'block';
 
   try {
-    if (!currentQuestion || !currentQuestion.image) {
-      throw new Error("找不到有效的題目資訊。");
+    const imgElement = document.getElementById('question-img');
+    if (!imgElement || !imgElement.src) {
+      throw new Error("畫面上找不到有效的圖片。");
     }
 
-    // 1. 透過 fetch 穩定轉檔 Base64 (避開 Canvas CORS 污染)
-    const imgResponse = await fetch(currentQuestion.image);
+    // 直接抓取 <img> 標籤當前的完整 src 網址
+    const imgResponse = await fetch(imgElement.src);
+    if (!imgResponse.ok) {
+      throw new Error(`圖片抓取失敗，HTTP 狀態碼：${imgResponse.status}`);
+    }
+
     const blob = await imgResponse.blob();
     const base64Data = await new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -226,7 +231,7 @@ async function askAI() {
       reader.readAsDataURL(blob);
     });
 
-    const promptText = `請直接分析這張圖形邏輯推理題目，說明為何正確答案是 ${currentQuestion.answer}，並條列出規律。
+    const promptText = `請直接分析這張圖形邏輯推理題目，說明為何正確答案是 ${currentQuestion ? currentQuestion.answer : ''}，並條列出規律。
 
 要求：
 1. 嚴禁自我介紹與廢話開場白。
@@ -234,7 +239,6 @@ async function askAI() {
 3. 避免重複性的過程敘述。
 4. 表示對角線方向時，請直接使用純文字與符號（如：左上至右下 \\ 或 左下至右上 /）。`;
 
-    // 2. 修正模型名稱為 gemini-2.5-flash
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -258,21 +262,19 @@ async function askAI() {
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!text) {
-      throw new Error("API 未回傳有效文字");
+      throw new Error("API 未回傳有效內容");
     }
 
-    // 3. 利用 HTML 已引入的 marked 渲染漂亮排版
     if (aiResult) {
       aiResult.innerHTML = typeof marked !== 'undefined' ? marked.parse(text) : text;
     }
     if (expBox) expBox.style.display = 'block';
 
   } catch (err) {
-    alert("執行失敗！原因：" + err.message);
+    alert("呼叫失敗！原因：" + err.message);
     console.error(err);
   } finally {
     if (loadingText) loadingText.style.display = 'none';
   }
 }
-
 nextQuestion();
