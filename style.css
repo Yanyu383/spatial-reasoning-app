@@ -101,3 +101,24 @@ button.eliminated {
   background-color: #e9ecef !important;
   border-color: #adb5bd !important;
 }
+
+/* AI 解析結果區塊精簡排版 */
+#ai-result {
+  line-height: 1.5; /* 縮減基本行高 */
+}
+
+#ai-result p,
+#ai-result h1,
+#ai-result h2,
+#ai-result h3,
+#ai-result h4,
+#ai-result ul,
+#ai-result ol {
+  margin-top: 4px !important;
+  margin-bottom: 4px !important; /* 縮減段落與標題上下間距 */
+}
+
+#ai-result ul,
+#ai-result ol {
+  padding-left: 20px; /* 縮減縮排空間 */
+}
