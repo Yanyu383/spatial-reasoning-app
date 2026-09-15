@@ -104,7 +104,7 @@ button.eliminated {
 
 /* AI 解析結果區塊精簡排版 */
 #ai-result {
-  line-height: 1.5; /* 縮減基本行高 */
+  line-height: 1.0; /* 縮減基本行高 */
 }
 
 #ai-result p,
