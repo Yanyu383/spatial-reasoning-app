@@ -71,7 +71,6 @@ button:hover {
   background: #eef9ff;
   border-radius: 8px;
   border-left: 4px solid #007bff;
-  white-space: pre-line;
 }
 
 .loading {
